@@ -1,17 +1,20 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 function App() {
-  const [chatInput, setChatInput] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [imageUrl, setImageUrl] = useState(null);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError("Please enter a prompt!");
+      return;
+    }
     setError("");
-    setImageUrl("");
+    setLoading(true);
+    setImageUrl(null);
     setCaption("");
 
     try {
@@ -20,51 +23,116 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ chatInput }),
+        body: JSON.stringify({ chatInput: prompt }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Something went wrong");
-      } else {
-        setImageUrl(data.image_url);
-        setCaption(data.caption);
+        throw new Error(data.error || "Something went wrong!");
       }
+
+      setImageUrl(data.image_url);
+      setCaption(data.caption);
     } catch (err) {
-      setError("Network error");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>ImaGEN - AI Image Generator</h1>
-      <form onSubmit={handleSubmit}>
+    <div style={styles.container}>
+      <h1 style={styles.title}>✨ ImaGEN AI Image Generator ✨</h1>
+      <p style={styles.subtitle}>Transform your ideas into vivid AI-generated images</p>
+
+      <div style={styles.inputContainer}>
         <input
           type="text"
-          placeholder="Enter prompt"
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          style={{ width: "300px", padding: "10px" }}
+          placeholder="Enter your creative prompt..."
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          style={styles.input}
         />
-        <button type="submit" style={{ marginLeft: "10px", padding: "10px" }}>
+        <button onClick={handleGenerate} style={styles.button}>
           Generate
         </button>
-      </form>
+      </div>
 
-      {loading && <p>Generating image...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p style={styles.error}>{error}</p>}
 
-      {imageUrl && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>Caption: {caption}</h3>
-          <img src={imageUrl} alt={caption} style={{ maxWidth: "500px" }} />
+      {loading && (
+        <div style={styles.loadingContainer}>
+          <div className="spinner" style={styles.spinner}></div>
+          <p style={styles.loadingText}>Generating image, please wait...</p>
         </div>
       )}
+
+      {imageUrl && (
+        <div style={styles.resultContainer}>
+          <p style={styles.caption}>{caption}</p>
+          <img src={imageUrl} alt={caption} style={styles.image} />
+        </div>
+      )}
+
+      {/* Inline CSS for spinner */}
+      <style>
+        {`
+          .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #4f46e5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    textAlign: "center",
+    padding: "50px 20px",
+    background: "linear-gradient(135deg, #f5f7fa, #c3cfe2)",
+    minHeight: "100vh",
+  },
+  title: { fontSize: "3rem", color: "#4f46e5", marginBottom: "10px" },
+  subtitle: { fontSize: "1.2rem", marginBottom: "30px", color: "#333" },
+  inputContainer: { display: "flex", justifyContent: "center", gap: "10px", marginBottom: "20px", flexWrap: "wrap" },
+  input: {
+    width: "300px",
+    padding: "12px 15px",
+    fontSize: "1rem",
+    borderRadius: "10px",
+    border: "1px solid #ccc",
+    outline: "none",
+  },
+  button: {
+    padding: "12px 25px",
+    fontSize: "1rem",
+    borderRadius: "10px",
+    border: "none",
+    backgroundColor: "#4f46e5",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "background-color 0.3s",
+  },
+  buttonHover: { backgroundColor: "#4338ca" },
+  error: { color: "red", marginBottom: "20px" },
+  loadingContainer: { marginTop: "30px" },
+  loadingText: { marginTop: "10px", fontSize: "1rem", color: "#555" },
+  resultContainer: { marginTop: "30px" },
+  caption: { fontSize: "1.1rem", fontWeight: "bold", marginBottom: "10px", color: "#333" },
+  image: { maxWidth: "80%", borderRadius: "15px", boxShadow: "0 8px 20px rgba(0,0,0,0.2)" },
+};
 
 export default App;
