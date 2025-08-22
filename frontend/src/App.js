@@ -8,8 +8,10 @@ function App() {
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
 
+  const API_URL = process.env.REACT_APP_API_URL; // Make sure this is set in Vercel
+
   const handleGenerate = async () => {
-    if (cooldown > 0) return; // Prevent multiple clicks during cooldown
+    if (cooldown > 0) return;
     if (!prompt.trim()) {
       setError("Please enter a prompt!");
       return;
@@ -21,7 +23,7 @@ function App() {
     setCaption("");
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}`, {
+      const response = await fetch(`${API_URL}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatInput: prompt }),
@@ -34,8 +36,7 @@ function App() {
       setImageUrl(data.image_url);
       setCaption(data.caption);
 
-      // Start cooldown
-      setCooldown(45);
+      setCooldown(45); // cooldown timer
     } catch (err) {
       setError(err.message);
     } finally {
@@ -43,17 +44,13 @@ function App() {
     }
   };
 
-  // Handle Enter key
   const handleKeyPress = (e) => {
     if (e.key === "Enter") handleGenerate();
   };
 
-  // Cooldown timer logic
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
+    const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
 
@@ -100,24 +97,21 @@ function App() {
         </div>
       )}
 
-      {/* Inline CSS for spinner */}
-      <style>
-        {`
-          .spinner {
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid #4f46e5;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-          }
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
+      <style>{`
+        .spinner {
+          border: 6px solid #f3f3f3;
+          border-top: 6px solid #4f46e5;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -133,22 +127,8 @@ const styles = {
   title: { fontSize: "3rem", color: "#4f46e5", marginBottom: "10px" },
   subtitle: { fontSize: "1.2rem", marginBottom: "30px", color: "#333" },
   inputContainer: { display: "flex", justifyContent: "center", gap: "10px", marginBottom: "20px", flexWrap: "wrap" },
-  input: {
-    width: "300px",
-    padding: "12px 15px",
-    fontSize: "1rem",
-    borderRadius: "10px",
-    border: "1px solid #ccc",
-    outline: "none",
-  },
-  button: {
-    padding: "12px 25px",
-    fontSize: "1rem",
-    borderRadius: "10px",
-    border: "none",
-    color: "#fff",
-    transition: "background-color 0.3s",
-  },
+  input: { width: "300px", padding: "12px 15px", fontSize: "1rem", borderRadius: "10px", border: "1px solid #ccc", outline: "none" },
+  button: { padding: "12px 25px", fontSize: "1rem", borderRadius: "10px", border: "none", color: "#fff", transition: "background-color 0.3s" },
   error: { color: "red", marginBottom: "20px" },
   loadingContainer: { marginTop: "30px" },
   loadingText: { marginTop: "10px", fontSize: "1rem", color: "#555" },
