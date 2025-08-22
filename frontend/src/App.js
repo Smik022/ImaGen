@@ -97,6 +97,19 @@ function App() {
         </div>
       )}
 
+      {/* Footer with GitHub credit */}
+      <div style={styles.footer}>
+        Built with ❤️ by{" "}
+        <a
+          href="https://github.com/smik022"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.link}
+        >
+          smik022
+        </a>
+      </div>
+
       <style>{`
         .spinner {
           border: 6px solid #f3f3f3;
@@ -135,6 +148,8 @@ const styles = {
   resultContainer: { marginTop: "30px" },
   caption: { fontSize: "1.1rem", fontWeight: "bold", marginBottom: "10px", color: "#333" },
   image: { maxWidth: "80%", borderRadius: "15px", boxShadow: "0 8px 20px rgba(0,0,0,0.2)" },
+  footer: { marginTop: "50px", fontSize: "0.9rem", color: "#555" },
+  link: { color: "#4f46e5", textDecoration: "none", fontWeight: "bold" },
 };
 
 export default App;
