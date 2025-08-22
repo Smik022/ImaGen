@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function App() {
   const [prompt, setPrompt] = useState("");
@@ -6,40 +6,56 @@ function App() {
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
 
   const handleGenerate = async () => {
+    if (cooldown > 0) return; // Prevent multiple clicks during cooldown
     if (!prompt.trim()) {
       setError("Please enter a prompt!");
       return;
     }
+
     setError("");
     setLoading(true);
     setImageUrl(null);
     setCaption("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/generate/", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatInput: prompt }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Something went wrong!");
-      }
+      if (!response.ok) throw new Error(data.error || "Something went wrong!");
 
       setImageUrl(data.image_url);
       setCaption(data.caption);
+
+      // Start cooldown
+      setCooldown(45);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Handle Enter key
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleGenerate();
+  };
+
+  // Cooldown timer logic
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   return (
     <div style={styles.container}>
@@ -52,10 +68,19 @@ function App() {
           placeholder="Enter your creative prompt..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onKeyPress={handleKeyPress}
           style={styles.input}
         />
-        <button onClick={handleGenerate} style={styles.button}>
-          Generate
+        <button
+          onClick={handleGenerate}
+          style={{
+            ...styles.button,
+            backgroundColor: cooldown > 0 ? "#888" : "#4f46e5",
+            cursor: cooldown > 0 ? "not-allowed" : "pointer",
+          }}
+          disabled={cooldown > 0}
+        >
+          {cooldown > 0 ? `Wait ${cooldown}s` : "Generate"}
         </button>
       </div>
 
@@ -121,12 +146,9 @@ const styles = {
     fontSize: "1rem",
     borderRadius: "10px",
     border: "none",
-    backgroundColor: "#4f46e5",
     color: "#fff",
-    cursor: "pointer",
     transition: "background-color 0.3s",
   },
-  buttonHover: { backgroundColor: "#4338ca" },
   error: { color: "red", marginBottom: "20px" },
   loadingContainer: { marginTop: "30px" },
   loadingText: { marginTop: "10px", fontSize: "1rem", color: "#555" },
